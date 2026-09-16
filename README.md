@@ -3,7 +3,7 @@
 A terminal **Markdown workspace**: browse a directory tree on the left, read
 beautifully rendered Markdown on the right, and never leave the terminal.
 
-![mdview screenshot](assets/sample.png)
+![mdview screenshot](assets/sample.jpg)
 
 ```text
 mdview .
