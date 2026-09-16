@@ -1,0 +1,24 @@
+# Build directories (one per generator we may use)
+build/
+build-*/
+out/
+cmake-build-*/
+
+# CMake / tooling
+compile_commands.json
+CMakeUserPresets.json
+CMakeFiles/
+CMakeCache.txt
+
+# Visual Studio
+.vs/
+*.sln
+*.vcxproj
+*.vcxproj.*
+*.user
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
