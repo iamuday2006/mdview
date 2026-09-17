@@ -2,7 +2,7 @@
 ; Build with Inno Setup 6.3+ (https://jrsoftware.org/isinfo.php)
 
 [Setup]
-AppId={{B5E47C8A-3F2D-4E6A-9C1B-7D8F0A2E5B3C}
+AppId={B5E47C8A-3F2D-4E6A-9C1B-7D8F0A2E5B3C}
 AppName=mdview
 AppVersion=0.1.0
 AppPublisher=iamuday2006
