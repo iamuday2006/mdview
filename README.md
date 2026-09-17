@@ -8,6 +8,7 @@ beautifully rendered Markdown on the right, and never leave the terminal.
 <div align="center">
 
 [![Download for Windows](https://img.shields.io/badge/Download-Windows-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/iamuday2006/mdview/releases/download/v0.1.0/mdview-win32-x64-0.1.0.exe)
+[![Download for Windows](https://img.shields.io/badge/Standalone-1111?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/iamuday2006/mdview/releases/download/v0.1.0/mdview.exe)
 
 </div>
 
