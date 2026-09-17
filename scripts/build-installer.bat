@@ -10,7 +10,7 @@ rem ---------------------------------------------------------------------------
 setlocal
 
 set "ROOT=%~dp0.."
-set "ISCC=ISCC.exe"
+set "ISCC=%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe"
 set "ISS=%ROOT%\installer\mdview.iss"
 
 rem --- check that the exe exists ---
@@ -37,7 +37,7 @@ if errorlevel 1 (
 
 echo.
 echo [mdview] Installer created:
-echo         %ROOT%\installer\output\mdview-0.1.0-setup.exe
+echo         %ROOT%\installer\output\mdview-win32-x64-0.1.0.exe
 echo.
 
 endlocal
