@@ -3,7 +3,7 @@ build/
 build-*/
 out/
 cmake-build-*/
-installer*/
+installer/output*
 
 # CMake / tooling
 compile_commands.json
