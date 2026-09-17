@@ -16,7 +16,7 @@ mdview .
 | Topic | Link |
 | --- | --- |
 | Features | [docs/features.md](docs/features.md) |
-| Building | [docs/building.md](docs/building.md) |
+| Build from Source | [docs/building.md](docs/building.md) |
 | Usage | [docs/usage.md](docs/usage.md) |
 | Keyboard Shortcuts | [docs/keys.md](docs/keys.md) |
 | Markdown Support | [docs/markdown-support.md](docs/markdown-support.md) |

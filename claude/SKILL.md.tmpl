@@ -1,0 +1,270 @@
+# mdview — C++20 Terminal Markdown Viewer
+
+A terminal Markdown workspace: file tree on the left, rendered document on the
+right. Native C++20, zero dependencies, one CMake build.
+
+## Trigger Phrases
+
+- "build mdview"
+- "run tests"
+- "add feature to mdview"
+- "fix bug in mdview"
+- "refactor mdview code"
+- "port mdview to new platform"
+
+## Instructions
+
+### Step 1: Understand the Architecture
+
+Before making any changes, read `docs/ARCHITECTURE.md` and `AGENTS.md`.
+The project follows one rule:
+
+> **Ported, not branched.** Platform differences are absorbed by a portable
+> interface, never by `#ifdef` in the code that consumes it.
+
+Key boundaries:
+- `#ifdef _WIN32` exists in exactly **two files** under `src/platform/windows/`
+- No file above `src/platform/` includes an OS header
+- The app runs against a `HeadlessTerminal` in tests
+
+### Step 2: Set Up the Build Environment
+
+```bash
+# Windows (auto-detects Visual Studio)
+scripts\build.bat
+
+# Windows (manual)
+cmake -S . -B build
+cmake --build build --config Release
+
+# Linux / macOS
+cmake -S . -B build
+cmake --build build --config Release
+```
+
+### Step 3: Run the Test Suite
+
+```bash
+ctest --test-dir build -C Release --output-on-failure
+```
+
+All 107 tests must pass before committing. Tests cover:
+- UTF-8 (malformed, overlong, surrogate, truncated)
+- ANSI input decoder (sequences, modifiers, control bytes)
+- Colour degradation and SGR
+- Screen grid (wide glyphs, clipping, box drawing, diff flush)
+- Parser and renderer for every construct
+- File IO, tree model, polling watcher
+- CLI parsing, layout geometry
+- Headless E2E (real Application on HeadlessTerminal)
+
+### Step 4: Make Your Changes
+
+Follow these rules:
+
+1. **Never add `#ifdef` above `src/platform/`**
+2. **Check neighboring files** for style, includes, naming
+3. **No new dependencies** — if you think you need one, reconsider
+4. **Run tests** after every change
+5. **Platform additions** — only `src/platform/<os>/` + `CMakeLists.txt`
+
+### Step 5: Verify the Build
+
+```bash
+# Run tests
+ctest --test-dir build -C Release --output-on-failure
+
+# Check for warnings
+cmake --build build --config Release 2>&1 | findstr /i "warning"
+```
+
+### Step 6: Update Documentation
+
+If you changed:
+- **Features** → update `docs/features.md`
+- **Keyboard shortcuts** → update `docs/keys.md`
+- **Build process** → update `docs/building.md`
+- **Architecture** → update `docs/ARCHITECTURE.md`
+- **README** → update `README.md`
+
+## Code Examples
+
+### Example 1: Adding a New Function
+
+```cpp
+// src/utils/string_utils.hpp
+#pragma once
+#include <string>
+
+namespace mdview::utils {
+
+// Returns true if the string starts with the given prefix.
+bool startsWith(const std::string& str, const std::string& prefix);
+
+}  // namespace mdview::utils
+```
+
+```cpp
+// src/utils/string_utils.cpp
+#include "utils/string_utils.hpp"
+
+namespace mdview::utils {
+
+bool startsWith(const std::string& str, const std::string& prefix) {
+    if (prefix.size() > str.size()) return false;
+    return str.compare(0, prefix.size(), prefix) == 0;
+}
+
+}  // namespace mdview::utils
+```
+
+### Example 2: Adding a Platform-Specific Implementation
+
+```cpp
+// src/platform/linux/platform_linux.cpp
+#include "platform/platform.hpp"
+#include <unistd.h>
+
+namespace mdview::platform {
+
+std::string name() { return "Linux"; }
+
+bool stdoutIsTerminal() {
+    return isatty(STDOUT_FILENO) != 0;
+}
+
+bool stdinIsTerminal() {
+    return isatty(STDIN_FILENO) != 0;
+}
+
+}  // namespace mdview::platform
+```
+
+### Example 3: Writing a Test
+
+```cpp
+// tests/test_string_utils.cpp
+#include "test_framework.hpp"
+#include "utils/string_utils.hpp"
+
+MDVIEW_TEST(startsWith_basic) {
+    CHECK(mdview::utils::startsWith("hello world", "hello"));
+    CHECK(!mdview::utils::startsWith("hello world", "world"));
+    CHECK(mdview::utils::startsWith("hello", "hello"));
+    CHECK(!mdview::utils::startsWith("hi", "hello"));
+}
+
+MDVIEW_TEST(startsWith_empty) {
+    CHECK(mdview::utils::startsWith("anything", ""));
+    CHECK(!mdview::utils::startsWith("", "something"));
+}
+```
+
+## Rules
+
+1. **Never add `#ifdef` above `src/platform/`** — Platform differences are
+   absorbed by the `Terminal` interface in `src/terminal/`, not by conditional
+   compilation in UI, parser, renderer, or app code.
+
+2. **No new dependencies** — The project has zero third-party libraries by
+   design. If you think you need one, implement it yourself or reconsider.
+
+3. **Run tests after every change** — `ctest --test-dir build -C Release`
+   must pass with zero failures.
+
+4. **Check neighboring files** — Look at files in the same directory for
+   style, includes, naming conventions, and patterns.
+
+5. **Paths use `std::filesystem::path`** — Never concatenate path separators
+   manually with `"\\"` or `"/"`.
+
+6. **No MSVC-only secure CRT** — Use `std::getenv` not `_dupenv_s`,
+   `std::fopen` not `fopen_s`. The code must build under GCC and Clang too.
+
+7. **Full redraw every frame** — Widgets never track dirty rectangles.
+   `Screen::flush()` diffs against the previous frame.
+
+8. **Capabilities-driven drawing** — Every drawing decision consults
+   `TerminalCapabilities`. Nothing assumes ANSI, Unicode, or colour.
+
+9. **Header-only test harness** — Tests use `MDVIEW_TEST`, `CHECK`,
+   `CHECK_EQ`, `CHECK_CONTAINS`, and `REQUIRE`. No external framework.
+
+10. **Installer PATH** — Never use `uninsdeletevalue` for PATH registry
+    entries. Use Pascal Code in `installer/mdview.iss`.
+
+## File References
+
+| File | Purpose |
+|------|---------|
+| `src/main.cpp` | Entry point, `--print` mode, argument dispatch |
+| `src/app/application.cpp` | Frame layout, event/render loop, all state |
+| `src/terminal/terminal.hpp` | The `Terminal` interface (the seam) |
+| `src/terminal/screen.hpp` | Platform-neutral grid of cells |
+| `src/terminal/input.cpp` | ANSI input normalisation |
+| `src/markdown/parser.cpp` | Block and inline Markdown parser |
+| `src/markdown/renderer.cpp` | Width-aware renderer |
+| `src/markdown/highlight.cpp` | Syntax highlighter |
+| `src/filesystem/file_tree.cpp` | Lazily-expanded tree model |
+| `src/filesystem/file_watcher.hpp` | `FileWatcher` interface |
+| `src/platform/windows/terminal_windows.cpp` | Win32 console API |
+| `src/platform/posix/terminal_posix.cpp` | termios/poll (Linux + macOS) |
+| `tests/test_framework.hpp` | Header-only test harness |
+| `installer/mdview.iss` | Inno Setup installer script |
+| `scripts/build.bat` | Windows build convenience script |
+| `docs/ARCHITECTURE.md` | Deep architecture documentation |
+| `AGENTS.md` | AI agent instructions |
+| `CLAUDE.md` | Claude-specific instructions |
+
+## Related Skills
+
+- `cpp-pro` — Modern C++20/23 patterns and best practices
+- `codebase-memory` — Graph-based code navigation
+- `test-master` — Test generation and coverage analysis
+
+## Notes
+
+### Build System
+
+- CMake 3.20+ required
+- MSVC: `/W4 /permissive- /utf-8 /Zc:__cplusplus /EHsc`
+- GCC/Clang: `-Wall -Wextra -Wpedantic`
+- `CMAKE_CXX_EXTENSIONS OFF` — no compiler extensions
+
+### Testing
+
+- 107 tests in header-only harness
+- Headless E2E: real `Application` on `HeadlessTerminal`
+- No external test framework (no Google Test, no Catch2)
+
+### Platform Support
+
+| Platform | Compiler | Status |
+|----------|----------|--------|
+| Windows | MSVC | Primary |
+| Linux | GCC/Clang | Supported |
+| macOS | Clang | Supported |
+
+### Key Design Patterns
+
+1. **Dependency rule** — arrows point down, nothing below knows about above
+2. **Interface seam** — `Terminal` is the only OS boundary
+3. **Lazy loading** — `FileTree` reads children only when expanded
+4. **Diff flush** — unchanged frames write zero bytes
+5. **Capability degradation** — colour, Unicode, ANSI all degrade gracefully
+
+### Common Pitfalls
+
+- Adding `#ifdef` in UI code (forbidden)
+- Using `windows.h` outside `src/platform/windows/`
+- Concatenating path separators manually
+- Using MSVC-only functions (`_dupenv_s`, `fopen_s`)
+- Adding third-party dependencies
+- Using `uninsdeletevalue` for PATH in Inno Setup
+
+## Changelog
+
+| Version | Changes |
+|---------|---------|
+| 1.0.0 | Initial release with full Markdown support |
+| 0.1.0 | Project created, architecture established |
